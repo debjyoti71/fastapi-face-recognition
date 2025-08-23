@@ -2,9 +2,9 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 gunicorn==21.2.0
 
-# Face Recognition stack
+# Face Recognition stack (use prebuilt dlib)
 face-recognition==1.3.0
-dlib==19.24.2
+dlib-bin==19.24.2
 numpy==1.24.3
 Pillow==10.0.1
 
