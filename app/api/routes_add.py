@@ -1,10 +1,6 @@
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
-from app.services import face_service
-import face_recognition
-import numpy as np
-from PIL import Image
-import io
+from app.services import simple_face_service as face_service
 import logging
 
 logger = logging.getLogger(__name__)
@@ -23,21 +19,9 @@ async def add_user(event_name: str = Form(...), username: str = Form(...), file:
 
     try:
         logger.info(f"Processing image upload for user: {username}")
-        # Load image and convert to numpy array
-        image = np.array(Image.open(io.BytesIO(file.file.read())))
-        logger.info(f"Image loaded successfully, shape: {image.shape}")
-
-        # Encode face
-        encodings = face_recognition.face_encodings(image)
-        if len(encodings) == 0:
-            logger.warning(f"No face detected in uploaded image for user: {username}")
-            return JSONResponse({"status": "error", "message": "No face detected in image"})
         
-        embedding = encodings[0].tolist()
-        logger.info(f"Face encoding generated successfully for user: {username}")
-
-        # Add user
-        result = face_service.add_user_face(event_name, username, embedding)
+        # Add user with image file
+        result = face_service.add_user_face(event_name, username, file.file)
         logger.info(f"Add user result: {result.get('status')} for {username}")
         return JSONResponse(result)
 
