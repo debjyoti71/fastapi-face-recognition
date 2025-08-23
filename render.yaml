@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: fastapi-face-recognition
+    env: python
+    region: oregon   # or frankfurt, singapore, etc. (pick closest)
+    plan: free
+    buildCommand: |
+      apt-get update && apt-get install -y cmake g++ make
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: gunicorn app.main:app --workers=4 --worker-class=uvicorn.workers.UvicornWorker --bind 0.0.0.0:10000
