@@ -1,0 +1,104 @@
+import json
+import requests
+import logging
+import tempfile
+import os
+import time
+from app.services import cloud_storage
+from app.core import config
+
+logger = logging.getLogger(__name__)
+
+
+def _load_embeddings_from_cloudinary(retry_count=3):
+    """Load embeddings directly from Cloudinary with retry mechanism"""
+    import time
+    cache_buster = int(time.time())
+    url = f"https://res.cloudinary.com/{config.CLOUD_NAME}/raw/upload/face_recognition/embeddings.json?cb={cache_buster}"
+    
+    for attempt in range(retry_count):
+        try:
+            logger.info(f"Loading embeddings from Cloudinary (attempt {attempt + 1})")
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                logger.info("Successfully loaded embeddings")
+                return response.json()
+            
+            if attempt < retry_count - 1:
+                logger.info(f"Retrying in 2 seconds... (attempt {attempt + 1}/{retry_count})")
+                time.sleep(2)
+            else:
+                logger.warning(f"No embeddings found after {retry_count} attempts, status: {response.status_code}")
+                
+        except requests.RequestException as e:
+            if attempt < retry_count - 1:
+                logger.warning(f"Request failed, retrying: {e}")
+                time.sleep(2)
+            else:
+                logger.error(f"Failed to load embeddings after {retry_count} attempts: {e}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in embeddings: {e}")
+            break
+    
+    return {}
+
+
+def _save_embeddings_to_cloudinary(data):
+    """Save embeddings directly to Cloudinary"""
+    try:
+        logger.info("Saving embeddings to Cloudinary")
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            json.dump(data, f)
+            temp_path = f.name
+        
+        cloud_storage.upload_embeddings(temp_path)
+        logger.info("Successfully saved embeddings")
+    except Exception as e:
+        logger.error(f"Failed to save embeddings: {e}")
+        raise
+    finally:
+        if 'temp_path' in locals() and os.path.exists(temp_path):
+            os.unlink(temp_path)
+
+
+def get_all_events():
+    """Get list of all events with user counts."""
+    try:
+        logger.info("Fetching all events")
+        storage_data = _load_embeddings_from_cloudinary()
+        
+        events = [{
+            "event_name": event_name,
+            "user_count": len(users)
+        } for event_name, users in storage_data.items()]
+        
+        logger.info(f"Found {len(events)} events")
+        return {"events": events}
+    except Exception as e:
+        logger.error(f"Error fetching events: {e}")
+        return {"status": "error", "message": "Failed to fetch events"}
+
+
+def delete_event(event_name: str):
+    """Delete an event and all its data."""
+    if not event_name or not event_name.strip():
+        logger.warning("Delete event called with empty name")
+        return {"status": "error", "message": "Event name is required"}
+    
+    try:
+        logger.info(f"Deleting event: {event_name}")
+        storage_data = _load_embeddings_from_cloudinary()
+        
+        if event_name not in storage_data:
+            logger.warning(f"Event not found: {event_name}")
+            return {"status": "error", "message": f"Event '{event_name}' not found"}
+        
+        user_count = len(storage_data[event_name])
+        del storage_data[event_name]
+        _save_embeddings_to_cloudinary(storage_data)
+        
+        logger.info(f"Successfully deleted event '{event_name}' with {user_count} users")
+        return {"status": "success", "message": f"Event '{event_name}' deleted"}
+    except Exception as e:
+        logger.error(f"Error deleting event '{event_name}': {e}")
+        return {"status": "error", "message": "Failed to delete event"}
