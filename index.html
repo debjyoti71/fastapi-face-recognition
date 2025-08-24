@@ -245,7 +245,10 @@
             return;
         }
         const url = `${API.EVENT_USERS}?event_name=${encodeURIComponent(eventName)}`;
-        const {ok, body} = await fetchJSON(url, { method:'GET' });
+        const {ok, body} = await fetchJSON(url, { 
+          method:'GET',
+          headers: { "ngrok-skip-browser-warning": "true" }
+         });
 
         if(ok && body){
             // handle response whether it's {users:[...]} or just an array

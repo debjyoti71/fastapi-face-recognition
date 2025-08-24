@@ -3,7 +3,7 @@ import logging
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.logging_config import setup_logging
-from app.api import routes_add, routes_verify, events
+from app.api import routes_add, routes_verify, events , get_transaction_details
 
 # Initialize logging
 setup_logging()
@@ -19,16 +19,19 @@ app = FastAPI(
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Or ["http://localhost:5500"] if serving frontend via Live Server
+    allow_origins=["*"],  # or ["http://localhost:3000", "https://your-ngrok-id.ngrok-free.app"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # Include routers
 app.include_router(routes_verify.router, prefix="/verify", tags=["Verify"])
+
 app.include_router(routes_add.router, prefix="/addUser", tags=["Add User"])
+
 app.include_router(events.router, prefix="/api", tags=["Events"])
+
+app.include_router(get_transaction_details.router,prefix="/get_transaction_details",tags=["get transaction details"])
 
 logger.info("FastAPI application initialized with all routers")
 
