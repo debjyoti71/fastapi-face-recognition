@@ -102,3 +102,18 @@ def delete_event(event_name: str):
     except Exception as e:
         logger.error(f"Error deleting event '{event_name}': {e}")
         return {"status": "error", "message": "Failed to delete event"}
+    
+
+def get_all_users(event_name: str):
+    """Get all users for a given event."""
+    try:
+        logger.info(f"Fetching all users in event: {event_name}")
+        storage_data = _load_embeddings_from_cloudinary()
+        
+        users = list(storage_data.get(event_name, {}).keys())
+        
+        logger.info(f"Found {len(users)} users in event '{event_name}'")
+        return {"users": users}
+    except Exception as e:
+        logger.error(f"Error fetching users for event '{event_name}': {e}")
+        return {"status": "error", "message": "Failed to fetch users"} 

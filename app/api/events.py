@@ -30,5 +30,13 @@ def get_cloudinary_data():
     logger.info("DEBUG: Fetching raw Cloudinary data")
     from app.services.event_service import _load_embeddings_from_cloudinary
     data = _load_embeddings_from_cloudinary()
-    logger.info(f"DEBUG: Raw data from Cloudinary: {data}")
+    # logger.info(f"DEBUG: Raw data from Cloudinary: {data}")
     return {"raw_data": data}
+
+@router.get("/all_user")
+def get_all_users(event_name: str):
+    """Get all users across all events"""
+    logger.info("GET /all_user endpoint accessed")
+    result = event_service.get_all_users(event_name)
+    logger.info(f"Returning {len(result.get('users', []))} users")
+    return result
