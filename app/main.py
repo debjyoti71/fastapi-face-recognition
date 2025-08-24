@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 import logging
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.core.logging_config import setup_logging
 from app.api import routes_add, routes_verify, events
 
@@ -12,6 +14,15 @@ app = FastAPI(
     title="Face Recognition Service",
     description="Microservice for user face verification and registration",
     version="1.0.0"
+)
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or ["http://localhost:5500"] if serving frontend via Live Server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include routers
