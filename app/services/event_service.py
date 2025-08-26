@@ -117,3 +117,34 @@ def get_all_users(event_name: str):
     except Exception as e:
         logger.error(f"Error fetching users for event '{event_name}': {e}")
         return {"status": "error", "message": "Failed to fetch users"} 
+    
+
+def delete_user(event_name: str, user_id: str):
+    """Delete a specific user from an event."""
+    if not event_name or not event_name.strip() or not user_id or not user_id.strip():
+        logger.warning("Delete user called with empty event name or user ID")
+        return {"status": "error", "message": "Event name and user ID are required"}
+    
+    try:
+        logger.info(f"Deleting user '{user_id}' from event: {event_name}")
+        storage_data = _load_embeddings_from_cloudinary()
+        
+        if event_name not in storage_data or user_id not in storage_data[event_name]:
+            logger.warning(f"User '{user_id}' not found in event '{event_name}'")
+            return {"status": "error", "message": f"User '{user_id}' not found in event '{event_name}'"}
+        
+        del storage_data[event_name][user_id]
+
+        # Optional: clean up empty event
+        if not storage_data[event_name]:
+            logger.info(f"Event '{event_name}' has no more users, deleting event")
+            del storage_data[event_name]
+
+        _save_embeddings_to_cloudinary(storage_data)
+        
+        logger.info(f"Successfully deleted user '{user_id}' from event '{event_name}'")
+        return {"status": "success", "message": f"User '{user_id}' deleted from event '{event_name}'"}
+    except Exception as e:
+        logger.error(f"Error deleting user '{user_id}' from event '{event_name}': {e}")
+        return {"status": "error", "message": f"Failed to delete user: {str(e)}"}  
+

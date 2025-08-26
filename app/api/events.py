@@ -40,3 +40,11 @@ def get_all_users(event_name: str):
     result = event_service.get_all_users(event_name)
     logger.info(f"Returning {len(result.get('users', []))} users")
     return result
+
+@router.get("/delete_user")
+def delete_user(event_name: str, user_id: str):
+    """Delete a specific user from an event"""
+    logger.info(f"DELETE /delete_user endpoint accessed for user_id: {user_id} in event: {event_name}")
+    result = event_service.delete_user(event_name, user_id)
+    logger.info(f"Delete user result: {result.get('status')}")
+    return result
