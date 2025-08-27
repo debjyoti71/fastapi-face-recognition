@@ -2,6 +2,25 @@
 
 A robust microservice for face recognition and verification built with FastAPI, featuring event-based user management and Cloudinary cloud storage integration.
 
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Test Application](#test-application)
+- [API Endpoints](#api-endpoints)
+- [Configuration](#configuration)
+- [Error Handling](#error-handling)
+- [Security Considerations](#security-considerations)
+- [Performance](#performance)
+- [Troubleshooting](#troubleshooting)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
+
 ## Features
 
 - **Face Registration**: Add users with their face images to specific events
@@ -11,6 +30,7 @@ A robust microservice for face recognition and verification built with FastAPI, 
 - **Cloud Storage**: Cloudinary integration for persistent data storage
 - **Comprehensive Logging**: Detailed logging for monitoring and debugging
 - **RESTful API**: Clean, documented API endpoints with CORS support
+- **Web Test Interface**: Interactive HTML application for testing all features
 
 ## Tech Stack
 
@@ -35,16 +55,19 @@ fastapi-face-recognition/
 │   ├── core/
 │   │   ├── config.py                   # Configuration management
 │   │   ├── logging_config.py           # Logging setup
-│   │   └── utils.py                    # Utility functions
+│   │   ├── utils.py                    # Utility functions
+│   │   └── __init__.py
 │   ├── services/
 │   │   ├── cloud_storage.py            # Cloudinary integration
 │   │   ├── event_service.py            # Event management logic
 │   │   ├── face_service.py             # Face recognition logic
 │   │   └── storage.py                  # Data storage utilities
 │   ├── models/                         # Data models
+│   │   └── __init__.py
 │   └── main.py                         # FastAPI application entry point
 ├── logs/                               # Application logs
 ├── tests/                              # Test files
+├── index.html                          # Web test interface
 ├── .env                                # Environment variables
 ├── requirements.txt                    # Python dependencies
 └── README.md                           # This file
@@ -108,6 +131,46 @@ The API will be available at `http://localhost:8000`
 Once the server is running, visit:
 - **Swagger UI**: `http://localhost:8000/docs`
 - **ReDoc**: `http://localhost:8000/redoc`
+
+## Test Application
+
+The project includes a comprehensive web-based test interface (`index.html`) that provides an interactive way to test all API functionality.
+
+### Features of Test Application
+
+- **Real-time Camera Access**: Uses device camera for live face capture
+- **Event Management**: Set and switch between different events
+- **User Registration**: Add new users with face images to events
+- **Face Verification**: Verify faces against registered users
+- **Live User List**: Real-time display of users in selected event
+- **Status Feedback**: Visual feedback for all operations
+- **Responsive Design**: Modern, dark-themed interface
+
+### Using the Test Application
+
+1. **Start the FastAPI server** (see [Usage](#usage) section)
+
+2. **Open the test interface**:
+   - Open `index.html` in your web browser
+   - Or serve it via a local server for HTTPS access:
+     ```bash
+     # Using Python's built-in server
+     python -m http.server 8080
+     # Then visit http://localhost:8080
+     ```
+
+3. **Test the workflow**:
+   - Enter an event name (e.g., "conference_2024")
+   - Click "Set as Event" to load existing users
+   - Click "Start Biometric" to capture and verify a face
+   - If not verified, add the user with a username
+   - View the updated user list in the right panel
+
+### Test Application Requirements
+
+- **Camera Access**: Requires HTTPS or localhost for camera permissions
+- **Modern Browser**: Supports WebRTC and modern JavaScript features
+- **Network Access**: Must be able to reach the FastAPI server
 
 ## API Endpoints
 
@@ -293,6 +356,11 @@ The API provides comprehensive error handling with detailed responses:
    - Activate virtual environment
    - Check Python version compatibility
 
+4. **Camera access issues in test app**
+   - Use HTTPS or localhost for camera permissions
+   - Check browser camera permissions
+   - Ensure no other applications are using the camera
+
 ### Logging
 
 - Logs are automatically generated in `logs/app.log`
@@ -315,13 +383,21 @@ Run tests using:
 python -m pytest tests/
 ```
 
+### Test with the Web Interface
+
+1. Start the FastAPI server
+2. Open `index.html` in a browser
+3. Test all functionality interactively
+4. Monitor logs for debugging
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
 4. Add tests for new functionality
-5. Submit a pull request
+5. Test with the web interface
+6. Submit a pull request
 
 ## License
 
@@ -332,8 +408,9 @@ This project is licensed under the MIT License.
 For issues and questions:
 1. Check the logs in `logs/app.log`
 2. Review the API documentation at `/docs`
-3. Create an issue in the repository
+3. Test functionality with `index.html`
+4. Create an issue in the repository
 
 ---
 
-**Note**: This service requires proper lighting and clear face images for optimal performance. Ensure users are facing the camera directly during registration and verification.
+**Note**: This service requires proper lighting and clear face images for optimal performance. Ensure users are facing the camera directly during registration and verification. The included test application provides an excellent way to validate functionality before integration.
