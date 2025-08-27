@@ -1,21 +1,22 @@
 # FastAPI Face Recognition Service
 
-A robust microservice for face recognition and verification built with FastAPI, featuring event-based user management and cloud storage integration.
+A robust microservice for face recognition and verification built with FastAPI, featuring event-based user management and Cloudinary cloud storage integration.
 
 ## Features
 
 - **Face Registration**: Add users with their face images to specific events
 - **Face Verification**: Verify user identity against registered faces in events
 - **Event Management**: Create, manage, and delete events with associated users
+- **User Management**: Get and delete users within events
 - **Cloud Storage**: Cloudinary integration for persistent data storage
 - **Comprehensive Logging**: Detailed logging for monitoring and debugging
-- **RESTful API**: Clean, documented API endpoints
+- **RESTful API**: Clean, documented API endpoints with CORS support
 
 ## Tech Stack
 
 - **FastAPI**: Modern, fast web framework for building APIs
 - **face-recognition**: Python library for face recognition using dlib
-- **Cloudinary**: Cloud-based image and video management
+- **Cloudinary**: Cloud-based storage for face embeddings
 - **NumPy**: Numerical computing for face embeddings
 - **Pillow**: Image processing library
 - **Uvicorn**: ASGI server for running the application
@@ -26,27 +27,27 @@ A robust microservice for face recognition and verification built with FastAPI, 
 fastapi-face-recognition/
 ├── app/
 │   ├── api/
-│   │   ├── events.py          # Event management endpoints
-│   │   ├── routes_add.py      # User registration endpoints
-│   │   └── routes_verify.py   # Face verification endpoints
+│   │   ├── events.py                    # Event management endpoints
+│   │   ├── routes_add.py               # User registration endpoints
+│   │   ├── routes_verify.py            # Face verification endpoints
+│   │   ├── get_transaction_details.py  # Transaction details (placeholder)
+│   │   └── __init__.py
 │   ├── core/
-│   │   ├── config.py          # Configuration management
-│   │   ├── logging_config.py  # Logging setup
-│   │   └── utils.py           # Utility functions
+│   │   ├── config.py                   # Configuration management
+│   │   ├── logging_config.py           # Logging setup
+│   │   └── utils.py                    # Utility functions
 │   ├── services/
-│   │   ├── cloud_storage.py   # Cloudinary integration
-│   │   ├── event_service.py   # Event management logic
-│   │   ├── face_service.py    # Face recognition logic
-│   │   └── storage.py         # Data storage utilities
-│   └── main.py                # FastAPI application entry point
-├── data/
-│   └── embeddings.json        # Local embeddings storage
-├── logs/
-│   └── app.log                # Application logs
-├── tests/                     # Test files
-├── .env                       # Environment variables
-├── requirements.txt           # Python dependencies
-└── README.md                  # This file
+│   │   ├── cloud_storage.py            # Cloudinary integration
+│   │   ├── event_service.py            # Event management logic
+│   │   ├── face_service.py             # Face recognition logic
+│   │   └── storage.py                  # Data storage utilities
+│   ├── models/                         # Data models
+│   └── main.py                         # FastAPI application entry point
+├── logs/                               # Application logs
+├── tests/                              # Test files
+├── .env                                # Environment variables
+├── requirements.txt                    # Python dependencies
+└── README.md                           # This file
 ```
 
 ## Installation
@@ -172,9 +173,48 @@ Get all events with user counts.
 
 Delete an event and all associated user data.
 
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Event 'conference_2024' deleted"
+}
+```
+
+### User Management
+
 **GET** `/api/all_user?event_name={event_name}`
 
 Get all users in a specific event.
+
+**Response:**
+```json
+{
+  "users": ["john_doe", "jane_smith", "bob_wilson"]
+}
+```
+
+**GET** `/api/delete_user?event_name={event_name}&user_id={user_id}`
+
+Delete a specific user from an event.
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "User 'john_doe' deleted from event 'conference_2024'"
+}
+```
+
+### Debug Endpoints
+
+**GET** `/api/debug/cloudinary-data`
+
+View raw Cloudinary data for debugging purposes.
+
+**GET** `/get_transaction_details/`
+
+Placeholder endpoint for transaction details (not implemented).
 
 ## Configuration
 
@@ -183,32 +223,21 @@ Get all users in a specific event.
 - **Threshold**: `0.6` (adjustable in `face_service.py`)
   - Lower values = stricter matching
   - Higher values = more lenient matching
+- **Distance Calculation**: Euclidean distance between face embeddings
+- **Confidence Score**: Calculated as `(1 - distance) * 100`
 
-### Logging
+### Cloud Storage
 
-Logs are stored in `logs/app.log` with the following levels:
-- INFO: General application flow
-- WARNING: Potential issues
-- ERROR: Error conditions
-
-## Testing
-
-Run the test suite:
-
-```bash
-python -m tests.test_add
-python -m tests.test_verify
-```
+- Face embeddings are stored as JSON in Cloudinary
+- Automatic retry mechanism for network failures
+- Cache-busting for real-time data updates
 
 ## Error Handling
 
-The API provides comprehensive error handling:
+The API provides comprehensive error handling with detailed responses:
 
-- **400 Bad Request**: Invalid input parameters
-- **404 Not Found**: Event or user not found
-- **500 Internal Server Error**: System errors
+**Common Error Responses:**
 
-Common error responses:
 ```json
 {
   "status": "error",
@@ -216,18 +245,34 @@ Common error responses:
 }
 ```
 
+```json
+{
+  "verified": false,
+  "username": null,
+  "message": "Event 'nonexistent_event' not found or has no registered users"
+}
+```
+
+**HTTP Status Codes:**
+- **200**: Success
+- **400**: Bad Request (invalid parameters)
+- **404**: Not Found (event/user not found)
+- **500**: Internal Server Error
+
 ## Security Considerations
 
 - Face embeddings are stored as numerical vectors (not actual images)
-- Cloudinary provides secure cloud storage
+- Cloudinary provides secure cloud storage with API authentication
 - Environment variables protect sensitive credentials
 - Input validation prevents malicious uploads
+- CORS enabled for cross-origin requests
 
 ## Performance
 
-- Face encoding typically takes 100-500ms per image
+- Face encoding: ~100-500ms per image
 - Verification against 100 users: ~50-100ms
-- Cloudinary CDN ensures fast data access globally
+- Cloudinary CDN ensures fast global data access
+- Retry mechanism for network reliability
 
 ## Troubleshooting
 
@@ -236,18 +281,39 @@ Common error responses:
 1. **No face detected**
    - Ensure image has clear, front-facing face
    - Check image quality and lighting
+   - Verify image format (JPEG, PNG supported)
 
 2. **Cloudinary connection errors**
-   - Verify environment variables
+   - Verify environment variables in `.env`
    - Check internet connectivity
+   - Review Cloudinary account status
 
-3. **Import errors**
-   - Ensure all dependencies are installed
+3. **Import/dependency errors**
+   - Ensure all dependencies are installed: `pip install -r requirements.txt`
    - Activate virtual environment
+   - Check Python version compatibility
 
-### Debug Endpoints
+### Logging
 
-- **GET** `/api/debug/cloudinary-data`: View raw Cloudinary data
+- Logs are automatically generated in `logs/app.log`
+- Log levels: INFO, WARNING, ERROR
+- Detailed request/response logging for debugging
+
+## Development
+
+### Adding New Features
+
+1. Create new route files in `app/api/`
+2. Add business logic in `app/services/`
+3. Update `main.py` to include new routers
+4. Add appropriate logging and error handling
+
+### Testing
+
+Run tests using:
+```bash
+python -m pytest tests/
+```
 
 ## Contributing
 
