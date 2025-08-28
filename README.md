@@ -33,6 +33,18 @@ A robust microservice for face recognition and verification built with FastAPI, 
 - **Web Test Interface**: Interactive HTML application for testing all features
 
 ## Tech Stack
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.8+-blue?logo=python" alt="Python" />
+  <img src="https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Uvicorn-ASGI%20Server-orange?logo=uvicorn" alt="Uvicorn" />
+  <img src="https://img.shields.io/badge/FaceRecognition-dlib-green" alt="Face Recognition" />
+  <img src="https://img.shields.io/badge/NumPy-Scientific%20Computing-yellow?logo=numpy" alt="NumPy" />
+  <img src="https://img.shields.io/badge/Pillow-Image%20Processing-lightgrey?logo=python" alt="Pillow" />
+  <img src="https://img.shields.io/badge/Cloudinary-Cloud%20Storage-blue?logo=cloudinary" alt="Cloudinary" />
+  <img src="https://img.shields.io/badge/pytest-Testing-red?logo=pytest" alt="Pytest" />
+  <img src="https://img.shields.io/badge/Logging-Structured%20Logs-green?logo=logstash" alt="Logging" />
+</p>
+
 
 - **FastAPI**: Modern, fast web framework for building APIs
 - **face-recognition**: Python library for face recognition using dlib
