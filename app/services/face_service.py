@@ -11,7 +11,7 @@ from app.core import config
 logger = logging.getLogger(__name__)
 
 # Threshold for face verification similarity (80% confidence)
-THRESHOLD = 0.5
+THRESHOLD = 0.4
 
 
 def _load_embeddings_from_cloudinary(retry_count=3):

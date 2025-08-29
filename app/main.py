@@ -43,10 +43,6 @@ async def startup_event():
 async def shutdown_event():
     logger.info("Face Recognition API shutting down")
 
-@app.get("/health")
-def health_check():
-    return {"status": "healthy", "service": "Face Recognition API"}
-
 @app.get("/")
 def root():
     logger.info("Root endpoint accessed")
