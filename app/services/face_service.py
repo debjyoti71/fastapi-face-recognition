@@ -10,8 +10,8 @@ from app.core import config
 
 logger = logging.getLogger(__name__)
 
-# Threshold for face verification similarity
-THRESHOLD = 0.6
+# Threshold for face verification similarity (80% confidence)
+THRESHOLD = 0.5
 
 
 def _load_embeddings_from_cloudinary(retry_count=3):
@@ -119,11 +119,23 @@ def verify_face(event_name: str, embedding: list):
     """
     if not event_name or not event_name.strip():
         logger.warning("Verify face called with empty event name")
-        return {"verified": False, "username": None, "message": "Event name is required"}
+        return {
+            "flag": False, 
+            "username": None, 
+            "message": "Event name is required",
+            "user_in_system": False,
+            "face_detected": False
+        }
     
     if not embedding or not isinstance(embedding, list):
         logger.warning("Verify face called with invalid embedding")
-        return {"verified": False, "username": None, "message": "Valid embedding is required"}
+        return {
+            "flag": False, 
+            "username": None, 
+            "message": "Valid embedding is required",
+            "user_in_system": False,
+            "face_detected": False
+        }
 
     try:
         logger.info(f"Verifying face against event '{event_name}'")
@@ -133,35 +145,69 @@ def verify_face(event_name: str, embedding: list):
         if not event_users:
             logger.info(f"Event '{event_name}' not found or has no users")
             return {
-                "verified": False, 
+                "flag": False, 
                 "username": None, 
-                "message": f"Event '{event_name}' not found or has no registered users"
+                "message": f"Event '{event_name}' not found or has no registered users",
+                "user_in_system": False,
+                "face_detected": True
             }
 
         logger.info(f"Checking against {len(event_users)} users in event '{event_name}'")
+        
+        best_match = None
+        best_distance = float('inf')
+        best_username = None
         
         for username, embeddings in event_users.items():
             for i, saved_emb in enumerate(embeddings):
                 try:
                     dist = np.linalg.norm(np.array(saved_emb) - np.array(embedding))
+                    
+                    # Track best match
+                    if dist < best_distance:
+                        best_distance = dist
+                        best_username = username
+                        best_match = round((1 - dist) * 100, 2)
+                    
                     if dist < THRESHOLD:
-                        logger.info(f"Match found: user '{username}' in event '{event_name}' (distance: {dist:.4f})")
+                        logger.info(f"Match found: user '{username}' in event '{event_name}' (distance: {dist:.4f}, confidence: {round((1 - dist) * 100, 2)}%)")
                         return {
-                            "verified": True, 
+                            "flag": True, 
                             "username": username, 
                             "message": f"Face verified successfully for user '{username}' in event '{event_name}'",
-                            "confidence": round((1 - dist) * 100, 2)
+                            "confidence": round((1 - dist) * 100, 2),
+                            "user_in_system": True,
+                            "face_detected": True
                         }
                 except Exception as e:
                     logger.warning(f"Error comparing embedding {i} for user '{username}': {e}")
                     continue
 
+        # Log most similar face even if not verified
+        if best_username:
+            logger.info(f"Most similar face: '{best_username}' with {best_match}% confidence (distance: {best_distance:.4f}) - Below threshold")
+            return {
+                "flag": False, 
+                "username": None, 
+                "message": "Face detected but confidence too low for verification",
+                "user_in_system": False,
+                "face_detected": True
+            }
+        
         logger.info(f"No match found in event '{event_name}'")
         return {
-            "verified": False, 
+            "flag": False, 
             "username": None, 
-            "message": f"No matching face found in event '{event_name}'"
+            "message": f"No matching face found in event '{event_name}'",
+            "user_in_system": False,
+            "face_detected": True
         }
     except Exception as e:
         logger.error(f"Error verifying face in event '{event_name}': {e}")
-        return {"verified": False, "username": None, "message": "Face verification failed due to system error"}
+        return {
+            "flag": False, 
+            "username": None, 
+            "message": "Face verification failed due to system error",
+            "user_in_system": False,
+            "face_detected": False
+        }
