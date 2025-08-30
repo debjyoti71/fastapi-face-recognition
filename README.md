@@ -238,6 +238,127 @@ Verification: Cloudinary → JSON → Face Encoding → Comparison
 - **Error Tracking**: Detailed error categorization and reporting
 - **Health Checks**: System status monitoring endpoints
 
+## Real-World Example Walkthrough
+
+Let's trace through a complete face verification process using actual system logs:
+
+#### Scenario: Face Verification Attempt
+
+**Setup**: Event 'C' has 1 registered user named 'kohli'
+
+**Step-by-Step Process**:
+
+```
+1. Client Request
+   POST /verify with image file and event_name="C"
+   
+2. Image Processing (100ms)
+   ✓ Image loaded: 413×295 pixels, 3 channels (RGB)
+   ✓ Face detection initiated
+   
+3. Face Encoding Generation (900ms)
+   ✓ Face detected and encoded to 128-dimensional vector
+   ✓ Ready for comparison
+   
+4. Database Lookup (500ms)
+   ✓ Connected to Cloudinary storage
+   ✓ Retrieved embeddings for event 'C'
+   ✓ Found 1 registered user: 'kohli'
+   
+5. Face Matching Analysis
+   ✓ Comparing input face vs 'kohli's stored face
+   ✓ Euclidean distance calculated: 0.6546
+   ✓ Confidence score: 34.54% = (1 - 0.6546) × 100
+   
+6. Threshold Evaluation
+   ✗ 34.54% < 60% (default threshold)
+   ✗ Match rejected - insufficient similarity
+   
+7. Result
+   ✗ Verification failed: No match found
+```
+
+#### Understanding the Confidence Score
+
+**Distance vs Confidence Relationship**:
+```python
+distance = 0.6546          # Euclidean distance between face encodings
+confidence = (1 - 0.6546) × 100 = 34.54%
+
+# Threshold Logic
+if confidence >= 60%:      # distance <= 0.4
+    return "VERIFIED"
+else:
+    return "NOT_VERIFIED"   # This case: 34.54% < 60%
+```
+
+**Confidence Interpretation**:
+- **90-100%**: Excellent match (same person, good conditions)
+- **70-89%**: Good match (same person, varying conditions)
+- **60-69%**: Acceptable match (threshold range)
+- **40-59%**: Poor match (likely different person)
+- **0-39%**: No match (definitely different person)
+
+#### Sample Log Output
+
+```
+2025-08-30 17:22:55,392 - POST /verify endpoint accessed for event: C
+2025-08-30 17:22:55,501 - Image loaded successfully, shape: (413, 295, 3)
+2025-08-30 17:22:56,406 - Face encoding generated for verification
+2025-08-30 17:22:56,918 - Successfully loaded embeddings from Cloudinary
+2025-08-30 17:22:56,920 - Checking against 1 users in event 'C'
+2025-08-30 17:22:56,929 - Most similar: 'kohli' with 34.54% confidence - Below threshold
+2025-08-30 17:22:56,929 - Verification result: None (no match found)
+```
+
+#### API Response Examples
+
+**Successful Verification (≥60% confidence)**:
+```json
+{
+  "verified": true,
+  "username": "kohli",
+  "message": "Face verified successfully for user 'kohli' in event 'C'",
+  "confidence": 87.23
+}
+```
+
+**Failed Verification (<60% confidence)**:
+```json
+{
+  "verified": false,
+  "username": null,
+  "message": "No matching face found in event 'C'",
+  "confidence": 34.54
+}
+```
+
+#### Troubleshooting Low Confidence Scores
+
+**Common Causes**:
+1. **Different Person**: Most likely cause for 34.54% confidence
+2. **Poor Image Quality**: Blurry, dark, or low-resolution images
+3. **Angle/Pose**: Face not front-facing during registration or verification
+4. **Lighting**: Significant lighting differences between registration and verification
+5. **Time Gap**: Appearance changes over time (facial hair, aging, etc.)
+
+**Solutions**:
+1. **Re-register**: Capture new registration image with better quality
+2. **Adjust Threshold**: Lower threshold for more lenient matching (not recommended)
+3. **Multiple Angles**: Register multiple face angles for the same user
+4. **Better Conditions**: Ensure good lighting and front-facing pose
+
+#### Performance Metrics from Example
+
+- **Total Processing Time**: ~1.5 seconds
+- **Image Loading**: 100ms
+- **Face Encoding**: 900ms (largest component)
+- **Database Lookup**: 500ms
+- **Comparison**: <10ms
+- **Memory Usage**: Minimal (only face encodings stored)
+
+This example demonstrates the system's precision in rejecting false matches while providing detailed logging for debugging and monitoring.
+
 ## Project Structure
 
 ```

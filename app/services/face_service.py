@@ -10,7 +10,7 @@ from app.core import config
 
 logger = logging.getLogger(__name__)
 
-# Threshold for face verification similarity (80% confidence)
+# Threshold for face verification similarity (60% confidence)
 THRESHOLD = 0.4
 
 
